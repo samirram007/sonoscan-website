@@ -9,7 +9,6 @@ import { useBranch } from '../../context/BranchContext'
 import Reveal from '../ui/Reveal'
 import CountUp from '../ui/CountUp'
 import { hoverIcons } from '../ui/ServiceIcons'
-import DoctorSection from '../ui/DoctorSection'
 import BrandWave from '../ui/BrandWave'
 
 const SLIDE_INTERVAL = 5250
@@ -498,8 +497,6 @@ export default function HomePage() {
           </div>
         </section>
       </Reveal>
-
-      <DoctorSection previewCount={6} />
 
       {/* ═══ OPD Outdoor Doctors Preview ═══ */}
       {(() => {

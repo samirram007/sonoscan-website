@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback, useRef } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Link } from '@tanstack/react-router'
 import SEO from '../ui/SEO'
 import { outdoorDoctorGroups } from '../../data/outdoorDoctors'
@@ -26,8 +26,6 @@ export default function OutdoorDoctorPage() {
   const [search, setSearch] = useState('')
   const [activeDept, setActiveDept] = useState<string | null>(null)
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set())
-  const groupRefs = useRef<Record<string, HTMLDivElement | null>>({})
-
   const groups = useMemo(
     () => sortGroups(outdoorDoctorGroups[selectedBranch.id] ?? []),
     [selectedBranch.id],
@@ -68,21 +66,6 @@ export default function OutdoorDoctorPage() {
 
   const totalDoctors = filteredGroups.reduce((sum, g) => sum + g.doctors.length, 0)
   const totalAll = groups.reduce((sum, g) => sum + g.doctors.length, 0)
-
-  // Scroll to active department group
-  const activeGroupRef = useRef<string | null>(null)
-  useEffect(() => {
-    if (activeDept && activeGroupRef.current !== activeDept) {
-      activeGroupRef.current = activeDept
-      const el = groupRefs.current[activeDept]
-      if (el) {
-        requestAnimationFrame(() => {
-          el.scrollIntoView({ behavior: 'smooth', block: 'start' })
-        })
-      }
-    }
-    if (!activeDept) activeGroupRef.current = null
-  }, [activeDept])
 
   const handleDeptClick = useCallback((dept: string | null) => {
     if (dept === activeDept) {
@@ -289,7 +272,6 @@ export default function OutdoorDoctorPage() {
                 return (
                   <Reveal key={group.id} direction="up" delay={groupIdx * 100} threshold={0.01}>
                     <div
-                      ref={el => { groupRefs.current[group.name] = el }}
                       id={`group-${group.name}`}
                       className={`bg-bg-card rounded-2xl border overflow-hidden transition-all duration-300 ${
                         isActiveDept
@@ -336,7 +318,7 @@ export default function OutdoorDoctorPage() {
                       {/* ── Group Content (collapsible) ── */}
                       <div
                         className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                          isExpanded ? 'max-h-[5000px] opacity-100' : 'max-h-0 opacity-0'
+                          isExpanded ? 'max-h-[70vh] opacity-100 overflow-y-auto' : 'max-h-0 opacity-0'
                         }`}
                       >
                         <div className="px-6 pb-6 pt-2 border-t border-violet-100">

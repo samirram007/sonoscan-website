@@ -6,6 +6,7 @@ import { hoverIcons } from '../ui/ServiceIcons'
 import BrandWave from '../ui/BrandWave'
 import { primaryNumber } from '../../data/branches'
 import { useBranch } from '../../context/BranchContext'
+import OPDConsultantsSection from '../ui/OPDConsultantsSection'
 
 export { servicesData }
 
@@ -143,84 +144,11 @@ export default function ServiceDetailPage() {
       </section>
 
       {/* ═══ OPD Doctors ═══ */}
-      {(() => {
-        const currentBranchGroups = outdoorDoctorGroups[selectedBranch.id] ?? []
-        if (currentBranchGroups.length === 0) return null
-        // Show top 3 departments with their first 2 doctors each
-        const previewGroups = currentBranchGroups.slice(0, 3)
-        return (
-          <section className="py-16 lg:py-20 bg-bg-base border-b border-violet-200">
-            <div className="max-w-7xl mx-auto px-6">
-              <div className="text-center max-w-2xl mx-auto mb-12">
-                <div className="inline-flex items-center gap-2 bg-violet-100 text-violet-700 px-4 py-2 rounded-full text-sm font-medium mb-4 border border-violet-200">
-                  🩺 OPD Consultations
-                </div>
-                <h2 className="text-3xl lg:text-4xl font-bold text-slate-900 mb-4">
-                  Specialist OPD Doctors at {selectedBranch.name}
-                </h2>
-                <p className="text-lg text-slate-500">
-                  Explore our specialist consultation schedule across multiple departments.
-                </p>
-              </div>
-
-              <div className="space-y-10">
-                {previewGroups.map((group) => (
-                  <div key={group.id}>
-                    <div className="flex items-center gap-3 mb-5">
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white text-lg shadow-md shadow-violet-500/25">
-                        {group.name === 'Cardiology' ? '❤️' : group.name === 'Neurology' ? '🧠' : group.name === 'Gastroenterology' ? '🦠' : '🩺'}
-                      </div>
-                      <div>
-                        <h3 className="text-lg font-bold text-slate-900">{group.name}</h3>
-                        <p className="text-sm text-slate-400">{group.doctors.length} doctor{group.doctors.length !== 1 ? 's' : ''}</p>
-                      </div>
-                    </div>
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {group.doctors.slice(0, 2).map(doc => (
-                        <div key={doc.name} className="bg-bg-card rounded-xl border border-violet-200 p-4 hover:shadow-lg hover:border-violet-300 transition-all duration-300">
-                          <div className="flex items-center gap-3 mb-2">
-                            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-xs shrink-0">
-                              {doc.name.replace(/^Dr\.?\s*/i, '').split(/\s+/).map(t => t.charAt(0).toUpperCase()).slice(0, 2).join('')}
-                            </div>
-                            <div className="min-w-0">
-                              <h4 className="font-semibold text-slate-900 text-sm truncate">{doc.name}</h4>
-                              <p className="text-xs text-slate-400 truncate">{doc.qualification}</p>
-                            </div>
-                          </div>
-                          {doc.schedule.length > 0 && (
-                            <div className="flex flex-wrap gap-1.5">
-                              {doc.schedule.slice(0, 3).map(slot => (
-                                <span key={`${slot.day}-${slot.time}`} className="text-[10px] font-semibold text-violet-700 bg-violet-50 border border-violet-200 px-2 py-0.5 rounded-full">
-                                  {slot.day} {slot.time}
-                                </span>
-                              ))}
-                              {doc.schedule.length > 3 && (
-                                <span className="text-[10px] text-slate-400">+{doc.schedule.length - 3} more</span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="text-center mt-10">
-                <Link
-                  to="/outdoor-doctor"
-                  className="group inline-flex items-center gap-2 bg-violet-600 hover:bg-violet-700 text-white px-8 py-3.5 rounded-xl font-semibold transition-all hover:shadow-xl hover:shadow-violet-500/25 active:scale-[0.98]"
-                >
-                  View All OPD Doctors
-                  <svg className="w-4 h-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                  </svg>
-                </Link>
-              </div>
-            </div>
-          </section>
-        )
-      })()}
+      <OPDConsultantsSection
+        groups={outdoorDoctorGroups[selectedBranch.id] ?? []}
+        branchName={selectedBranch.name}
+        previewCount={3}
+      />
 
       {/* ═══ Main Content ═══ */}
       <section className="py-16 lg:py-24 bg-bg-surface">

@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { Link, useLocation } from '@tanstack/react-router'
 import SEO from '../ui/SEO'
 import { branches, type Branch } from '../../data/branches'
@@ -7,7 +7,7 @@ import { departments } from '../../data/departments'
 import { outdoorDoctorGroups } from '../../data/outdoorDoctors'
 import { useBranch } from '../../context/BranchContext'
 import BrandWave from '../ui/BrandWave'
-import { DEPT_ICONS, OutdoorDoctorCard } from '../ui/OutdoorDoctorCard'
+import OPDConsultantsSection from '../ui/OPDConsultantsSection'
 
 const serviceIcons: Record<string, string> = {
   'Primary Care': '\u{1F52C}',
@@ -54,9 +54,38 @@ function BranchContent({ branch }: { branch: Branch }) {
   // Filter doctors by branch
   const branchDoctors = appointmentDoctors.filter(doc => doc.branchIds.includes(branch.id))
 
+  // Our Doctors search + filter state
+  const [docSearch, setDocSearch] = useState('')
+  const [docSpecFilter, setDocSpecFilter] = useState('all')
+  const [docSpecOpen, setDocSpecOpen] = useState(false)
+
+  const docSpecialtyIcons: Record<string, string> = {
+    Cardiology: '❤️',
+    Neurology: '🧠',
+    Gastroenterology: '🦠',
+    ENT: '👂',
+    'Paediatric Cardiology': '👶',
+    PFT: '🫁',
+    Pathology: '🔬',
+    Radiology: '🩻',
+  }
+
+  const docSpecialties = useMemo(() => {
+    const set = new Set(branchDoctors.map(d => d.specialty))
+    return ['all', ...Array.from(set).sort()]
+  }, [branchDoctors])
+
+  const filteredDoctors = useMemo(() => {
+    const q = docSearch.toLowerCase().trim()
+    return branchDoctors.filter(doc => {
+      if (docSpecFilter !== 'all' && doc.specialty !== docSpecFilter) return false
+      if (q && !doc.name.toLowerCase().includes(q) && !doc.specialty.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [branchDoctors, docSearch, docSpecFilter])
+
   // OPD (outdoor) consultants roster for this branch, grouped by department
   const opdGroups = outdoorDoctorGroups[branch.id] ?? []
-  const opdCount = opdGroups.reduce((n, g) => n + g.doctors.length, 0)
 
   // Look up correct doctor slug from teamMembers
   const getDoctorSlug = (name: string) =>
@@ -287,43 +316,142 @@ function BranchContent({ branch }: { branch: Branch }) {
                 </div>
               </div>
 
+              {/* OPD / Outdoor Consultants */}
+              {opdGroups.length > 0 && (
+                <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+                  <OPDConsultantsSection
+                    groups={opdGroups}
+                    branchName={branch.name}
+                  />
+                </div>
+              )}
+
               {/* Meet Our Doctors */}
               {branchDoctors.length > 0 && (
-                <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
+                <div className="animate-fade-in-up" style={{ animationDelay: '175ms' }}>
                   <h2 className="text-2xl font-bold text-slate-900 mb-5">
                     Our Doctors at {branch.name}
                   </h2>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {branchDoctors.map((doc) => {
-                      const slug = getDoctorSlug(doc.name)
-                      return (
-                        <Link
-                          key={doc.name}
-                          to="/doctors/$slug"
-                          params={{ slug }}
-                          className="flex items-center gap-4 bg-bg-card rounded-xl p-4 border border-violet-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all group"
+
+                  {/* Search + Filter bar */}
+                  <div className="flex flex-col sm:flex-row gap-3 mb-5">
+                    {/* Search input */}
+                    <div className="relative flex-1">
+                      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
+                      </svg>
+                      <input
+                        type="text"
+                        placeholder="Search by name or specialty…"
+                        value={docSearch}
+                        onChange={e => setDocSearch(e.target.value)}
+                        className="w-full pl-9 pr-8 py-2.5 rounded-lg border border-violet-200 bg-bg-card text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
+                      />
+                      {docSearch && (
+                        <button
+                          onClick={() => setDocSearch('')}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                          aria-label="Clear search"
                         >
-                          <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                            {doc.initials}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-slate-900 group-hover:text-violet-600 transition-colors truncate">{doc.name}</p>
-                            <p className="text-xs text-slate-400 truncate">{doc.specialty}</p>
-                            <div className="flex gap-1 mt-1.5">
-                              {(doc.branchSchedule?.find(s => s.branchId === branch.id)?.days ?? []).map(day => (
-                                <span key={day} className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">
-                                  {day.slice(0, 2)}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                          <svg className="w-4 h-4 text-slate-300 group-hover:text-violet-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18 18 6M6 6l12 12" />
                           </svg>
-                        </Link>
-                      )
-                    })}
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Specialty dropdown */}
+                    <div className="relative sm:w-64">
+                      <button
+                        type="button"
+                        onClick={() => setDocSpecOpen(prev => !prev)}
+                        onBlur={() => setTimeout(() => setDocSpecOpen(false), 150)}
+                        className="w-full flex items-center gap-2 pl-3 pr-8 py-2.5 rounded-lg border border-violet-200 bg-bg-card text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all cursor-pointer text-left"
+                      >
+                        <span className="text-base leading-none">{docSpecFilter === 'all' ? '🩺' : (docSpecialtyIcons[docSpecFilter] ?? '🩺')}</span>
+                        <span className="flex-1 truncate">{docSpecFilter === 'all' ? 'All Specialties' : docSpecFilter}</span>
+                      </button>
+                      {docSpecOpen && (
+                        <div className="absolute z-50 mt-1.5 w-full bg-bg-card border border-violet-200 rounded-lg shadow-xl shadow-violet-500/10 py-1 max-h-52 overflow-y-auto">
+                          {docSpecialties.map(spec => {
+                            const label = spec === 'all' ? 'All Specialties' : spec
+                            const icon = spec === 'all' ? '🩺' : (docSpecialtyIcons[spec] ?? '🩺')
+                            const active = docSpecFilter === spec
+                            return (
+                              <button
+                                key={spec}
+                                type="button"
+                                onClick={() => { setDocSpecFilter(spec); setDocSpecOpen(false) }}
+                                className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm text-left transition-colors ${
+                                  active ? 'bg-violet-100 text-violet-700 font-medium' : 'text-slate-700 hover:bg-violet-50'
+                                }`}
+                              >
+                                <span className="text-base leading-none w-5 text-center">{icon}</span>
+                                <span className="flex-1 truncate">{label}</span>
+                                {active && (
+                                  <svg className="w-3.5 h-3.5 text-violet-600 shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m4.5 12.75 6 6 9-13.5" />
+                                  </svg>
+                                )}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                      <svg className={`absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none transition-transform ${docSpecOpen ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                      </svg>
+                    </div>
                   </div>
+
+                  {/* Results count */}
+                  {(docSearch || docSpecFilter !== 'all') && (
+                    <p className="text-xs text-slate-400 mb-4">
+                      Showing {filteredDoctors.length} of {branchDoctors.length} doctors
+                      {docSpecFilter !== 'all' && <> in {docSpecFilter}</>}
+                      {docSearch && <> matching &ldquo;{docSearch}&rdquo;</>}
+                    </p>
+                  )}
+
+                  {/* Doctor grid */}
+                  {filteredDoctors.length > 0 ? (
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      {filteredDoctors.map((doc) => {
+                        const slug = getDoctorSlug(doc.name)
+                        return (
+                          <Link
+                            key={doc.name}
+                            to="/doctors/$slug"
+                            params={{ slug }}
+                            className="flex items-center gap-4 bg-bg-card rounded-xl p-4 border border-violet-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all group"
+                          >
+                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
+                              {doc.initials}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold text-slate-900 group-hover:text-violet-600 transition-colors truncate">{doc.name}</p>
+                              <p className="text-xs text-slate-400 truncate">{doc.specialty}</p>
+                              <div className="flex gap-1 mt-1.5">
+                                {(doc.branchSchedule?.find(s => s.branchId === branch.id)?.days ?? []).map(day => (
+                                  <span key={day} className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">
+                                    {day.slice(0, 2)}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <svg className="w-4 h-4 text-slate-300 group-hover:text-violet-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                            </svg>
+                          </Link>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-slate-400 text-sm">No doctors found matching your criteria</p>
+                    </div>
+                  )}
+
                   <Link
                     to="/doctors"
                     className="inline-flex items-center gap-2 text-sm text-violet-600 font-medium hover:text-violet-700 transition-colors mt-4"
@@ -333,49 +461,6 @@ function BranchContent({ branch }: { branch: Branch }) {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                     </svg>
                   </Link>
-                </div>
-              )}
-
-              {/* OPD / Outdoor Consultants */}
-              {opdGroups.length > 0 && (
-                <div className="animate-fade-in-up" style={{ animationDelay: '175ms' }}>
-                  <div className="flex items-center justify-between mb-5">
-                    <div>
-                      <h2 className="text-2xl font-bold text-slate-900">OPD Consultants at {branch.name}</h2>
-                      <p className="text-sm text-slate-400 mt-1">
-                        {opdCount} visiting specialists across {opdGroups.length} departments
-                      </p>
-                    </div>
-                    <Link
-                      to="/outdoor-doctor"
-                      className="text-sm text-violet-600 hover:text-violet-700 font-medium flex items-center gap-1 shrink-0"
-                    >
-                      Full schedule
-                      <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
-                      </svg>
-                    </Link>
-                  </div>
-                  <div className="space-y-8">
-                    {opdGroups.map(group => (
-                      <div key={group.id}>
-                        <div className="flex items-center gap-3 mb-4">
-                          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-lg shadow-md shadow-violet-500/25 shrink-0">
-                            {DEPT_ICONS[group.name] ?? '🩺'}
-                          </div>
-                          <h3 className="font-semibold text-slate-900">{group.name}</h3>
-                          <span className="text-xs text-slate-400">
-                            {group.doctors.length} doctor{group.doctors.length !== 1 ? 's' : ''}
-                          </span>
-                        </div>
-                        <div className="grid sm:grid-cols-2 gap-4">
-                          {group.doctors.map(doc => (
-                            <OutdoorDoctorCard key={doc.name} doc={doc} department={group.name} />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               )}
 

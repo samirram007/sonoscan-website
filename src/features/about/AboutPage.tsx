@@ -657,6 +657,24 @@ function BranchLocationsGrid() {
 
 /* ── Sonoscan Timeline ── */
 function SonoscanTimeline() {
+  const [visibleCount, setVisibleCount] = useState(5)
+  const [hovering, setHovering] = useState(false)
+  const sectionRef = useRef<HTMLElement>(null)
+
+  // Auto-collapse when scrolling back up (section leaves viewport)
+  useEffect(() => {
+    const el = sectionRef.current
+    if (!el) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) setVisibleCount(5)
+      },
+      { threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [])
+
   const milestones = [
     { year: '1990', title: 'Echocardiography & Ultrasonography', description: 'he Beginning of Advanced Diagnostic Excellence.' },
     { year: '1991', title: 'E.E.G & E.C.G.', description: 'Setting the Standard in EEG & ECG Diagnostics.' },
@@ -698,7 +716,7 @@ function SonoscanTimeline() {
   ]
 
   return (
-    <section className="py-20 lg:py-28 bg-bg-surface relative overflow-hidden">
+    <section ref={sectionRef} className="py-20 lg:py-28 bg-bg-surface relative overflow-hidden">
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute top-1/2 -translate-y-1/2 -right-40 w-[500px] h-[500px] bg-violet-500/5 rounded-full blur-3xl" />
       </div>
@@ -720,11 +738,11 @@ function SonoscanTimeline() {
         </div>
 
         <div className="max-w-4xl mx-auto">
-          {milestones.map((milestone, i) => (
-            <Reveal key={milestone.year} direction="up" delay={i * 100} threshold={0.1}>
+          {milestones.slice(0, visibleCount).map((milestone, i) => (
+            <Reveal key={milestone.year} direction="up" delay={i * 20} threshold={0.1}>
               <div className="relative flex items-start gap-6 pb-10 last:pb-0">
                 {/* Timeline line */}
-                {i < milestones.length - 1 && (
+                {i < Math.min(visibleCount, milestones.length) - 1 && (
                   <div className="absolute left-[19px] top-12 w-0.5 bg-gradient-to-b from-violet-400 to-violet-200" style={{ height: 'calc(100% + 2.5rem)' }} />
                 )}
 
@@ -761,6 +779,51 @@ function SonoscanTimeline() {
             </Reveal>
           ))}
         </div>
+
+        {/* Show More button */}
+        {visibleCount < milestones.length && (
+          <div className="relative mt-12">
+            {/* Ghost preview — absolutely positioned so it doesn't shift layout */}
+            {hovering && (
+              <div className="absolute inset-x-0 top-full pt-6 opacity-35 pointer-events-none transition-opacity duration-300">
+                <div className="max-w-4xl mx-auto">
+                  {milestones.slice(visibleCount, visibleCount + 5).map((milestone) => (
+                    <div key={milestone.year} className="relative flex items-start gap-6 pb-10 last:pb-0">
+                      <div className="relative z-10 shrink-0">
+                        <div className="w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold bg-white text-violet-700 border-2 border-violet-300">
+                          {milestone.year}
+                        </div>
+                      </div>
+                      <div className="flex-1 bg-bg-card rounded-2xl border border-violet-200 p-6 lg:p-8">
+                        <div className="flex items-center gap-3 mb-2">
+                          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-500">
+                            {milestone.year}
+                          </span>
+                          <h3 className="text-lg font-bold text-slate-900">{milestone.title}</h3>
+                        </div>
+                        <p className="text-sm text-slate-500 leading-relaxed">{milestone.description}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="text-center">
+              <button
+                onClick={() => setVisibleCount(prev => Math.min(prev + 5, milestones.length))}
+                onMouseEnter={() => setHovering(true)}
+                onMouseLeave={() => setHovering(false)}
+                className="inline-flex items-center gap-2 bg-white border-2 border-violet-200 text-violet-700 px-8 py-3.5 rounded-xl font-semibold transition-all hover:border-violet-300 hover:bg-violet-50 hover:shadow-lg active:scale-[0.98]"
+              >
+                Show More
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth="2.5" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </section>
   )

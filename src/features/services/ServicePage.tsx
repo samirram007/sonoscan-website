@@ -4,12 +4,14 @@ import SEO from '../ui/SEO'
 import { servicesData, planFeatures, pricingPlans } from '../../data/services'
 import { stats } from '../../data/home'
 import { departments } from '../../data/departments'
+import { outdoorDoctorGroups } from '../../data/outdoorDoctors'
 import { useBranch } from '../../context/BranchContext'
 import Reveal from '../ui/Reveal'
 import CountUp from '../ui/CountUp'
 import { hoverIcons } from '../ui/ServiceIcons'
 import DoctorSection from '../ui/DoctorSection'
 import DepartmentCard from '../ui/DepartmentCard'
+import OPDConsultantsSection from '../ui/OPDConsultantsSection'
 import BrandWave from '../ui/BrandWave'
 
 export default function ServicesPage() {
@@ -354,6 +356,13 @@ export default function ServicesPage() {
           </Reveal>
         </div>
       </section>
+
+      {/* ═══ OPD Consultants ═══ */}
+      <OPDConsultantsSection
+        groups={outdoorDoctorGroups[selectedBranch.id] ?? []}
+        branchName={selectedBranch.name}
+        previewCount={3}
+      />
 
       <DoctorSection />
 
