@@ -58,6 +58,8 @@ function BranchContent({ branch }: { branch: Branch }) {
   const [docSearch, setDocSearch] = useState('')
   const [docSpecFilter, setDocSpecFilter] = useState('all')
   const [docSpecOpen, setDocSpecOpen] = useState(false)
+  const [showEmptyDepts, setShowEmptyDepts] = useState(false)
+  const [deptChipFilter, setDeptChipFilter] = useState('all')
 
   const docSpecialtyIcons: Record<string, string> = {
     Cardiology: '❤️',
@@ -83,6 +85,43 @@ function BranchContent({ branch }: { branch: Branch }) {
       return true
     })
   }, [branchDoctors, docSearch, docSpecFilter])
+
+  // Group filtered doctors by department — show all departments, empty ones included
+  const filteredDoctorsGrouped = useMemo(() => {
+    const groups = new Map<string, typeof filteredDoctors>()
+    // Seed with all departments so empty ones appear too
+    for (const dept of departments) {
+      groups.set(dept.name, [])
+    }
+    for (const doc of filteredDoctors) {
+      const deptName = doc.specialty.includes('—')
+        ? doc.specialty.split('—')[1].trim()
+        : doc.specialty
+      const arr = groups.get(deptName) ?? []
+      arr.push(doc)
+      groups.set(deptName, arr)
+    }
+    // Sort alphabetically by department name
+    return new Map(
+      Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
+    )
+  }, [filteredDoctors])
+
+  // Map department names to icons for chips
+  const deptIconMap = useMemo(() => {
+    const map = new Map<string, string>()
+    for (const dept of departments) {
+      map.set(dept.name, dept.icon)
+    }
+    return map
+  }, [])
+
+  // Build chip list: only departments that have doctors at this branch
+  const deptChips = useMemo(() => {
+    return Array.from(filteredDoctorsGrouped.entries())
+      .filter(([, docs]) => docs.length > 0)
+      .map(([name]) => ({ name, icon: deptIconMap.get(name) ?? '🩺' }))
+  }, [filteredDoctorsGrouped, deptIconMap])
 
   // OPD (outdoor) consultants roster for this branch, grouped by department
   const opdGroups = outdoorDoctorGroups[branch.id] ?? []
@@ -316,19 +355,9 @@ function BranchContent({ branch }: { branch: Branch }) {
                 </div>
               </div>
 
-              {/* OPD / Outdoor Consultants */}
-              {opdGroups.length > 0 && (
-                <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
-                  <OPDConsultantsSection
-                    groups={opdGroups}
-                    branchName={branch.name}
-                  />
-                </div>
-              )}
-
               {/* Meet Our Doctors */}
               {branchDoctors.length > 0 && (
-                <div className="animate-fade-in-up" style={{ animationDelay: '175ms' }}>
+                <div className="animate-fade-in-up" style={{ animationDelay: '150ms' }}>
                   <h2 className="text-2xl font-bold text-slate-900 mb-5">
                     Our Doctors at {branch.name}
                   </h2>
@@ -361,7 +390,7 @@ function BranchContent({ branch }: { branch: Branch }) {
                     </div>
 
                     {/* Specialty dropdown */}
-                    <div className="relative sm:w-64">
+                    <div className="relative w-full sm:w-72">
                       <button
                         type="button"
                         onClick={() => setDocSpecOpen(prev => !prev)}
@@ -413,38 +442,98 @@ function BranchContent({ branch }: { branch: Branch }) {
                     </p>
                   )}
 
-                  {/* Doctor grid */}
-                  {filteredDoctors.length > 0 ? (
-                    <div className="grid sm:grid-cols-2 gap-4">
-                      {filteredDoctors.map((doc) => {
-                        const slug = getDoctorSlug(doc.name)
-                        return (
-                          <Link
-                            key={doc.name}
-                            to="/doctors/$slug"
-                            params={{ slug }}
-                            className="flex items-center gap-4 bg-bg-card rounded-xl p-4 border border-violet-200 hover:border-violet-300 hover:bg-violet-50/50 transition-all group"
-                          >
-                            <div className="w-12 h-12 rounded-full bg-gradient-to-br from-violet-500 to-violet-700 flex items-center justify-center text-white font-bold text-sm shrink-0">
-                              {doc.initials}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold text-slate-900 group-hover:text-violet-600 transition-colors truncate">{doc.name}</p>
-                              <p className="text-xs text-slate-400 truncate">{doc.specialty}</p>
-                              <div className="flex gap-1 mt-1.5">
-                                {(doc.branchSchedule?.find(s => s.branchId === branch.id)?.days ?? []).map(day => (
-                                  <span key={day} className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-100 text-emerald-700 font-medium">
-                                    {day.slice(0, 2)}
-                                  </span>
-                                ))}
-                              </div>
-                            </div>
-                            <svg className="w-4 h-4 text-slate-300 group-hover:text-violet-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
-                            </svg>
-                          </Link>
-                        )
-                      })}
+                  {/* Department chip filters */}
+                  {deptChips.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      <button
+                        type="button"
+                        onClick={() => setDeptChipFilter('all')}
+                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                          deptChipFilter === 'all'
+                            ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                            : 'bg-bg-card text-slate-600 border-violet-200 hover:border-violet-300 hover:text-violet-600'
+                        }`}
+                      >
+                        All
+                      </button>
+                      {deptChips.map(({ name, icon }) => (
+                        <button
+                          key={name}
+                          type="button"
+                          onClick={() => setDeptChipFilter(prev => prev === name ? 'all' : name)}
+                          className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium border transition-all ${
+                            deptChipFilter === name
+                              ? 'bg-violet-600 text-white border-violet-600 shadow-sm'
+                              : 'bg-bg-card text-slate-600 border-violet-200 hover:border-violet-300 hover:text-violet-600'
+                          }`}
+                        >
+                          <span className="text-sm leading-none">{icon}</span>
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Hide-empty toggle */}
+                  <div className="flex items-center justify-between mb-4">
+                    <p className="text-xs text-slate-400">
+                      {Array.from(filteredDoctorsGrouped.entries()).filter(([dept, d]) => (showEmptyDepts || d.length > 0) && (deptChipFilter === 'all' || dept === deptChipFilter)).filter(([, d]) => d.length > 0).length} of {filteredDoctorsGrouped.size} departments have doctors
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowEmptyDepts(prev => !prev)}
+                      className="inline-flex items-center gap-2 text-xs font-medium text-violet-600 hover:text-violet-700 transition-colors"
+                    >
+                      <span className="relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200">
+                        <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white shadow transition-transform duration-200 ${showEmptyDepts ? 'translate-x-[18px] bg-violet-500' : 'translate-x-1 bg-slate-300'}`} />
+                      </span>
+                      {showEmptyDepts ? 'Showing all departments' : 'Hiding empty departments'}
+                    </button>
+                  </div>
+
+                  {/* Doctor groups by department */}
+                  {Array.from(filteredDoctorsGrouped.values()).filter(d => showEmptyDepts || d.length > 0).length > 0 ? (
+                    <div className="grid sm:grid-cols-2 gap-5">
+                      {Array.from(filteredDoctorsGrouped.entries())
+                        .filter(([dept, docs]) => (showEmptyDepts || docs.length > 0) && (deptChipFilter === 'all' || dept === deptChipFilter))
+                        .map(([dept, docs]) => (
+                        <div key={dept} className="bg-bg-card rounded-xl border border-violet-200 overflow-hidden">
+                          <div className="bg-gradient-to-r from-violet-600 to-violet-700 px-5 py-3">
+                            <h3 className="text-base font-bold text-white">Department Of {dept} <span className="text-sm font-medium opacity-80">({docs.length})</span></h3>
+                          </div>
+                          <div className="divide-y divide-violet-100">
+                            {docs.map((doc) => {
+                              const slug = getDoctorSlug(doc.name)
+                              const qual = doc.specialty.includes('—')
+                                ? doc.specialty.split('—')[0].trim()
+                                : ''
+                              return (
+                                <Link
+                                  key={doc.name}
+                                  to="/doctors/$slug"
+                                  params={{ slug }}
+                                  className="flex items-center gap-3 px-5 py-3 hover:bg-violet-50/50 transition-colors group"
+                                >
+                                  <svg className="w-5 h-5 text-slate-400 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                  </svg>
+                                  <div className="flex-1 min-w-0">
+                                    <span className="text-sm font-medium text-slate-900 group-hover:text-violet-600 transition-colors">
+                                      {doc.name}
+                                    </span>
+                                    {qual && (
+                                      <span className="text-xs text-slate-500 ml-2">- {qual}</span>
+                                    )}
+                                  </div>
+                                  <svg className="w-4 h-4 text-slate-300 group-hover:text-violet-500 transition-colors shrink-0" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5" />
+                                  </svg>
+                                </Link>
+                              )
+                            })}
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
                     <div className="text-center py-8">
@@ -461,6 +550,16 @@ function BranchContent({ branch }: { branch: Branch }) {
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
                     </svg>
                   </Link>
+                </div>
+              )}
+
+              {/* OPD / Outdoor Consultants */}
+              {opdGroups.length > 0 && (
+                <div className="animate-fade-in-up" style={{ animationDelay: '175ms' }}>
+                  <OPDConsultantsSection
+                    groups={opdGroups}
+                    branchName={branch.name}
+                  />
                 </div>
               )}
 
