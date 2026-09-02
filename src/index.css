@@ -313,6 +313,32 @@ body {
   animation: heartbeatRing 2.4s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
+/* ── Card Hover Effects ── */
+@keyframes cardLift {
+  from { transform: translateY(0) scale(1); box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+  to   { transform: translateY(-4px) scale(1.01); box-shadow: 0 20px 40px rgba(85,82,231,0.12); }
+}
+@keyframes glowPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(85,82,231,0); }
+  50%      { box-shadow: 0 0 20px 4px rgba(85,82,231,0.15); }
+}
+@keyframes shimmerBorder {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.animate-card-lift {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease;
+}
+.animate-card-lift:hover {
+  animation: cardLift 0.3s ease forwards;
+}
+.animate-glow-pulse:hover {
+  animation: glowPulse 2s ease-in-out infinite;
+}
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
 /* ── Selection ── */
 ::selection {
   background: rgba(168, 85, 247, 0.3);
