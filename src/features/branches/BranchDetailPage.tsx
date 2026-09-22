@@ -28,7 +28,7 @@ const branchRoutes: Record<string, '/services/kolkata' | '/services/malda' | '/s
 
 function BranchNotFound() {
   return (
-    <>
+    <div className="branch-theme">
       <SEO title="Branch Not Found | Sonoscan Healthcare" description="The requested branch could not be found at Sonoscan Healthcare." />
       <section className="min-h-screen bg-bg-base flex items-center justify-center px-6">
         <div className="text-center animate-fade-in-up">
@@ -43,7 +43,7 @@ function BranchNotFound() {
           <Link to="/services" className="bg-gradient-to-r from-violet-600 to-purple-600 hover:from-violet-700 hover:to-purple-700 text-white px-8 py-3 rounded-2xl font-semibold transition-all">View All Locations</Link>
         </div>
       </section>
-    </>
+    </div>
   )
 }
 
@@ -59,6 +59,7 @@ function BranchContent({ branch }: { branch: Branch }) {
   const [docSpecOpen, setDocSpecOpen] = useState(false)
   const [showEmptyDepts, setShowEmptyDepts] = useState(false)
   const [deptChipFilter, setDeptChipFilter] = useState('all')
+  const [addressCopied, setAddressCopied] = useState(false)
 
   const docSpecialtyIcons: Record<string, string> = {
     Cardiology: '❤️', Neurology: '🧠', Gastroenterology: '🦠', ENT: '👂',
@@ -117,29 +118,35 @@ function BranchContent({ branch }: { branch: Branch }) {
     return { name, deptSlug, tagline: dept?.tagline, description: dept?.description }
   })
 
+  const copyAddress = async () => {
+    await navigator.clipboard.writeText(branch.address)
+    setAddressCopied(true)
+    window.setTimeout(() => setAddressCopied(false), 1800)
+  }
+
   return (
     <>
-      <section className="relative min-h-[560px] overflow-hidden bg-[#1c2730] pt-20 lg:pt-24">
+      <section className="relative min-h-[560px] overflow-hidden bg-[#171647] pt-20 lg:pt-24">
         <div className="absolute inset-0 pointer-events-none opacity-60" style={{ backgroundImage: 'linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px)', backgroundSize: '44px 44px' }} />
         <div className="relative mx-auto min-h-[460px] max-w-none px-6 pb-10 lg:pb-14 lg:px-[max(1.5rem,calc((100vw-80rem)/2))]">
           <nav className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500 mb-12" aria-label="Breadcrumb">
             <Link to="/" className="hover:text-[#e2644a] transition-colors">Home</Link><span className="text-slate-300">/</span><Link to="/services" className="hover:text-[#e2644a] transition-colors">Locations</Link><span className="text-slate-300">/</span><span className="text-[#e2644a]">{branch.name}</span>
           </nav>
           <div className="relative min-h-[400px] lg:min-h-[460px]">
-            <div className="relative z-10 max-w-xl rounded-[2rem] bg-[#fbfaf7]/95 p-7 shadow-2xl shadow-black/20 backdrop-blur-sm lg:mt-12 lg:p-10 animate-fade-in-up">
-              <p className="inline-flex items-center gap-2 text-[#e2644a] text-sm font-bold uppercase tracking-[0.2em] mb-6"><span className="w-8 h-px bg-[#e2644a]" /> Sonoscan Healthcare</p>
-              <h1 className="max-w-xl text-6xl sm:text-7xl lg:text-[7.5rem] font-black tracking-[-0.07em] leading-[0.82] text-[#1c2730]">{branch.name}<span className="text-[#e2644a]">.</span></h1>
+            <div className="relative z-10 max-w-xl rounded-[2rem] bg-white/95 p-7 shadow-2xl shadow-black/20 backdrop-blur-sm lg:mt-12 lg:p-10 animate-fade-in-up">
+              <p className="inline-flex items-center gap-2 text-violet-600 text-sm font-bold uppercase tracking-[0.2em] mb-6"><span className="w-8 h-px bg-violet-600" /> Sonoscan Healthcare</p>
+              <h1 className="max-w-xl text-6xl sm:text-7xl lg:text-[7.5rem] font-black tracking-[-0.07em] leading-[0.82] text-violet-950">{branch.name}<span className="text-cyan-500">.</span></h1>
               <p className="max-w-md mt-8 text-lg leading-relaxed text-slate-600">A complete diagnostic partner for {branch.name}, bringing accurate testing, specialist care, and a calmer healthcare experience closer to home.</p>
               <div className="flex flex-wrap gap-3 mt-8">
-                <Link to="/appointments" className="inline-flex items-center gap-3 bg-[#1c2730] text-white px-6 py-3.5 rounded-full font-bold text-sm hover:bg-[#e2644a] transition-colors">Book an appointment<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg></Link>
-                <a href={`tel:${branch.phone.split('/')[0].replace(/[^0-9]/g, '').trim()}`} className="inline-flex items-center gap-2 border border-[#1c2730]/20 text-[#1c2730] px-6 py-3.5 rounded-full font-bold text-sm hover:border-[#e2644a] hover:text-[#e2644a] transition-colors">Call {branch.phone.split('/')[0].trim()}</a>
+                <Link to="/appointments" className="inline-flex items-center gap-3 bg-violet-700 text-white px-6 py-3.5 rounded-full font-bold text-sm hover:bg-violet-800 transition-colors">Book an appointment<svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 12h14m-6-6 6 6-6 6" /></svg></Link>
+                <a href={`tel:${branch.phone.split('/')[0].replace(/[^0-9]/g, '').trim()}`} className="inline-flex items-center gap-2 border border-violet-300 text-violet-900 px-6 py-3.5 rounded-full font-bold text-sm hover:border-cyan-500 hover:text-violet-700 transition-colors">Call {branch.phone.split('/')[0].trim()}</a>
               </div>
-              <p className="mt-6 border-t border-[#1c2730]/10 pt-4 text-sm leading-relaxed text-slate-500 lg:hidden"><span className="font-bold text-[#1c2730]">Find us:</span> {branch.address}</p>
+              <p className="mt-6 border-t border-violet-200 pt-4 text-sm leading-relaxed text-slate-500 lg:hidden"><span className="font-bold text-violet-950">Find us:</span> {branch.address}</p>
             </div>
             <div className="absolute inset-0 min-h-[400px] lg:min-h-[460px] animate-fade-in-up" style={{ animationDelay: '180ms', animationFillMode: 'both' }}>
               <div className="absolute -top-5 -right-4 lg:right-8 z-10 w-28 h-28 bg-[#d8e7dc] rounded-full flex items-center justify-center text-center rotate-12"><span className="text-xs font-black uppercase leading-tight text-[#1c5948]">Care<br />nearby<br />since 1998</span></div>
               <div className="h-full min-h-[400px] lg:min-h-[460px] overflow-hidden rounded-[2rem] rounded-br-[8rem] bg-slate-200 shadow-2xl shadow-[#1c2730]/15"><img src={branch.image} alt={`${branch.name} Sonoscan Healthcare centre`} className="w-full h-full min-h-[400px] lg:min-h-[460px] object-cover" loading="eager" /><div className="absolute inset-0 rounded-[2rem] rounded-br-[8rem] bg-gradient-to-r from-[#1c2730]/35 via-transparent to-[#1c2730]/10" /></div>
-              <div className="absolute bottom-6 left-6 right-6 z-20 hidden bg-[#1c2730]/95 text-white p-5 rounded-2xl lg:left-[52%] lg:right-8 lg:flex items-start gap-4 backdrop-blur-sm"><svg className="w-5 h-5 mt-0.5 shrink-0 text-[#f0b35b]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-[#f0b35b] mb-1">Find us</p><p className="text-sm leading-relaxed text-white/80">{branch.address}</p></div></div>
+              <div className="absolute bottom-6 left-6 right-6 z-20 hidden bg-violet-950/95 text-white p-5 rounded-2xl lg:left-[52%] lg:right-8 lg:flex items-start gap-4 backdrop-blur-sm"><svg className="w-5 h-5 mt-0.5 shrink-0 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.8"><path strokeLinecap="round" strokeLinejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /><path strokeLinecap="round" strokeLinejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" /></svg><div className="min-w-0 flex-1"><p className="text-xs font-bold uppercase tracking-[0.16em] text-cyan-400 mb-1">Find us</p><p className="text-sm leading-relaxed text-white/80">{branch.address}</p></div><button type="button" onClick={copyAddress} className="shrink-0 rounded-lg border border-white/20 px-3 py-2 text-xs font-bold text-white/80 hover:border-cyan-400 hover:text-cyan-300 transition-colors">{addressCopied ? 'Copied' : 'Copy'}</button></div>
             </div>
           </div>
         </div>

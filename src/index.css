@@ -339,6 +339,22 @@ body {
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
+/* Keep the branch experience aligned with Sonoscan's core palette. */
+.branch-theme [class~="bg-[#f5f1e9]"] { background-color: #f8faff !important; }
+.branch-theme [class~="bg-[#fbfaf7]"] { background-color: #ffffff !important; }
+.branch-theme [class~="bg-[#1c2730]"] { background-color: #171647 !important; }
+.branch-theme [class~="bg-[#d8e7dc]"] { background-color: #e0e4ff !important; }
+.branch-theme [class~="text-[#e2644a]"] { color: #5552e7 !important; }
+.branch-theme [class~="text-[#1c2730]"] { color: #171647 !important; }
+.branch-theme [class~="text-[#1c5948]"] { color: #3b37b7 !important; }
+.branch-theme [class~="text-[#f0b35b]"] { color: #06b6d4 !important; }
+.branch-theme [class~="border-[#1c2730]/10"] { border-color: #e7ebff !important; }
+.branch-theme [class~="border-[#1c2730]/15"] { border-color: #d5dcff !important; }
+.branch-theme [class~="border-[#e2644a]/60"] { border-color: #7f88f5 !important; }
+.branch-theme [class~="hover\:bg-[#e2644a]:hover"] { background-color: #4743d6 !important; }
+.branch-theme [class~="hover\:text-[#e2644a]:hover"] { color: #4743d6 !important; }
+.branch-theme [class~="hover\:border-[#e2644a]:hover"] { border-color: #7f88f5 !important; }
+
 /* ── Selection ── */
 ::selection {
   background: rgba(168, 85, 247, 0.3);
